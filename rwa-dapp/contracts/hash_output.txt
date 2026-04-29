@@ -1,0 +1,16 @@
+﻿======================================================
+         DEMONSTRASI HASHING KECCAK256 (EVM)          
+======================================================
+
+Teks : Proposal Perbaikan Atap Gedung Senilai 0.5 ETH
+Hash : 0x98da834a8f9bbea9af052887e4de4ee76fb7245905dd6a68ce13f2e3349ef702
+
+------------------------------------------------------
+
+Teks : Proposal Perbaikan atap Gedung Senilai 0.5 ETH
+Hash : 0x99574402e5ac6dd65c5d0f815814b1feb685eae2043b48bb5cb76afd13ee84c6
+
+[KESIMPULAN]
+Perubahan SATU HURUF menyebabkan Hash berubah 100% (Avalanche Effect).
+
+======================================================

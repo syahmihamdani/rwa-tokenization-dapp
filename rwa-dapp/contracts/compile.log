@@ -1,0 +1,40 @@
+﻿node.exe : [1m[31mDeclar
+ationError:[39m[22m 
+Identifier not found or 
+not unique.
+At C:\Program 
+Files\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (  
+  [1m[31mDeclar... or    
+ not unique.:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+ --> contracts/PropertyTok
+en.sol:8:43:
+  |
+8 | contract 
+PropertyToken is ERC20, 
+Ownable, ERC20Permit, 
+ERC20Votes {
+  |                       
+                    
+^^^^^^^^^^^
+
+
+[31m[1mError[22m[39m 
+[31m[1mHH600:[22m[39m 
+Compilation failed
+
+For more info go to https:
+//v2.hardhat.org/HH600 or 
+run Hardhat with 
+--show-stack-traces
