@@ -60,9 +60,9 @@ async function main() {
   await token.connect(deployer).delegate(deployer.address);
   console.log("Delegated voting power.");
   
-  const rentAmount = hre.ethers.parseEther("5.0");
+  const rentAmount = hre.ethers.parseEther("10.0");
   await distributor.payRent({ value: rentAmount });
-  console.log("Paid 5 ETH rent into DividendDistributor.");
+  console.log("Paid 10 ETH rent into DividendDistributor.");
 
   const frontendConfigPath = path.join(__dirname, "../../frontend/src/config.json");
   

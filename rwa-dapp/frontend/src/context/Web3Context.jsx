@@ -46,19 +46,22 @@ export const Web3Provider = ({ children }) => {
     init();
 
     if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-        } else {
-          setAccount(null);
-          setSigner(null);
-        }
+      window.ethereum.on('accountsChanged', () => {
+        window.location.reload();
+      });
+      window.ethereum.on('chainChanged', () => {
+        window.location.reload();
       });
     }
   }, []);
 
+  const disconnectWallet = () => {
+    setAccount(null);
+    setSigner(null);
+  };
+
   return (
-    <Web3Context.Provider value={{ account, provider, signer, connectWallet, loading }}>
+    <Web3Context.Provider value={{ account, provider, signer, connectWallet, disconnectWallet, loading }}>
       {children}
     </Web3Context.Provider>
   );
