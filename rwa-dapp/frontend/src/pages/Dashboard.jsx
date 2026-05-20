@@ -100,7 +100,7 @@ export default function Dashboard() {
             <Coins size={36} />
           </div>
           <div>
-            <p className="text-sm text-slate-400 font-medium">Your Tokens</p>
+            <p className="text-sm text-slate-400 font-medium">PDAO</p>
             <p className="text-3xl font-bold">{parseFloat(balance).toLocaleString()}</p>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function Dashboard() {
                       </div>
                       
                       <div className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold uppercase tracking-wider">
-                        Active RWA
+                        Active
                       </div>
                     </div>
                   </div>
