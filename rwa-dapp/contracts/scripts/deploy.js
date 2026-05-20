@@ -38,34 +38,9 @@ async function main() {
   const distributorAddress = await distributor.getAddress();
   console.log("DividendDistributor deployed to:", distributorAddress);
 
-  // --- SEEDING DATA FOR DEMO ---
-  console.log("\n--- Seeding Demo Data ---");
-  
-  await registry.registerProperty(
-    "123 Blockchain Ave, Jakarta",
-    "$1,000,000",
-    "ipfs://QmDummyLegalDocCID12345"
-  );
-  console.log("Registered dummy property.");
-
-  const amountToUser1 = hre.ethers.parseEther("100000");
-  const amountToUser2 = hre.ethers.parseEther("50000");
-  
-  await token.transfer(user1.address, amountToUser1);
-  await token.transfer(user2.address, amountToUser2);
-  console.log(`Transferred 100k tokens to ${user1.address} and 50k to ${user2.address}`);
-
-  await token.connect(user1).delegate(user1.address);
-  await token.connect(user2).delegate(user2.address);
-  await token.connect(deployer).delegate(deployer.address);
-  console.log("Delegated voting power.");
-  
-  const rentAmount = hre.ethers.parseEther("10.0");
-  await distributor.payRent({ value: rentAmount });
-  console.log("Paid 10 ETH rent into DividendDistributor.");
-
+  // --- WRITE FRONTEND CONFIG ---
   const frontendConfigPath = path.join(__dirname, "../../frontend/src/config.json");
-  
+
   const config = {
     PropertyToken: tokenAddress,
     PropertyDAO: daoAddress,
@@ -77,11 +52,51 @@ async function main() {
     fs.mkdirSync(path.join(__dirname, "../../frontend/src"), { recursive: true });
     fs.writeFileSync(frontendConfigPath, JSON.stringify(config, null, 2));
     console.log("Wrote contract addresses to frontend/src/config.json");
-  } catch(e) {
+  } catch (e) {
     console.error("Could not write to frontend config", e);
   }
 
-  console.log("\nDeployment & Seeding Complete!");
+  // --- SEEDING DATA FOR DEMO ---
+  const isLocalNetwork = hre.network.name === "hardhat" || hre.network.name === "localhost";
+
+  if (isLocalNetwork && user1 && user2) {
+    console.log("\n--- Seeding Demo Data (Local) ---");
+    await registry.registerProperty(
+      "Jl. ABC 123",
+      "$1,000,000",
+      "ipfs://QmDummyLegalDocCID12345"
+    );
+    console.log("Registered dummy property.");
+
+    const amountToUser1 = hre.ethers.parseEther("100000");
+    const amountToUser2 = hre.ethers.parseEther("50000");
+
+    await token.transfer(user1.address, amountToUser1);
+    await token.transfer(user2.address, amountToUser2);
+    console.log(`Transferred 100k tokens to ${user1.address} and 50k to ${user2.address}`);
+
+    await token.connect(user1).delegate(user1.address);
+    await token.connect(user2).delegate(user2.address);
+    await token.connect(deployer).delegate(deployer.address);
+    console.log("Delegated voting power.");
+
+    const rentAmount = hre.ethers.parseEther("10.0");
+    await distributor.payRent({ value: rentAmount });
+    console.log("Paid 10 ETH rent into DividendDistributor.");
+  } else {
+    console.log("\n--- Live Network / Single Signer Setup ---");
+    // On a live network, we delegate voting power to the deployer so they can test DAO voting
+    try {
+      console.log("Delegating voting power to deployer...");
+      const tx = await token.delegate(deployer.address);
+      await tx.wait();
+      console.log("Successfully delegated voting power to deployer.");
+    } catch (e) {
+      console.warn("Could not delegate voting power to deployer:", e.message);
+    }
+  }
+
+  console.log("\nDeployment & Configuration Complete!");
 }
 
 main().catch((error) => {
