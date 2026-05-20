@@ -27,11 +27,25 @@ export default function Dashboard() {
       for (let i = 1; i < Number(nextId); i++) {
         const prop = await registry.properties(i);
         if (prop.isRegistered) {
+          let imageCid = null;
+          let docCid = prop.legalDocumentCID;
+          
+          if (prop.legalDocumentCID && prop.legalDocumentCID.startsWith('{')) {
+            try {
+              const meta = JSON.parse(prop.legalDocumentCID);
+              imageCid = meta.image;
+              docCid = meta.doc;
+            } catch (e) {
+              console.error("Failed to parse property JSON CID", e);
+            }
+          }
+
           props.push({
             id: i,
             location: prop.location,
             valuation: prop.valuation,
-            cid: prop.legalDocumentCID
+            cid: docCid,
+            imageCid: imageCid
           });
         }
       }
@@ -111,34 +125,74 @@ export default function Dashboard() {
 
         {/* Properties Metadata */}
         <div className="glass p-6 rounded-2xl flex flex-col text-left h-full md:col-span-3">
-          <div className="flex items-center space-x-3 mb-4">
+          <div className="flex items-center space-x-3 mb-6">
             <Building2 className="text-teal-400" />
-            <h3 className="text-xl font-bold">Aset Properti Anda</h3>
+            <h3 className="text-xl font-bold">Aset Properti Terdaftar</h3>
           </div>
           {properties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {properties.map(prop => (
-                <div key={prop.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 flex flex-col gap-2 text-sm text-slate-300">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-teal-400 text-lg">Property #{prop.id}</span>
-                  </div>
-                  <p><strong className="text-slate-100">Location:</strong> {prop.location}</p>
-                  <p><strong className="text-slate-100">Valuation:</strong> {prop.valuation}</p>
-                  <div className="w-full">
-                    <strong className="text-slate-100 block mb-1">Legal Docs:</strong>
-                    {prop.cid ? (
-                      <a
-                        href={getIPFSUrl(prop.cid)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/10 border border-teal-500/30 rounded-lg text-teal-400 hover:bg-teal-500/20 hover:text-teal-300 transition-all text-xs font-mono"
-                      >
-                        <ExternalLink size={12} />
-                        {prop.cid.length > 20 ? prop.cid.substring(0, 10) + '...' + prop.cid.substring(prop.cid.length - 8) : prop.cid}
-                      </a>
+                <div key={prop.id} className="glass bg-slate-800/30 rounded-2xl overflow-hidden border border-slate-700 flex flex-col transition-all hover:scale-[1.02] hover:border-slate-600 shadow-xl group">
+                  {/* Property Image Header */}
+                  <div className="relative h-48 w-full bg-gradient-to-br from-slate-900 to-slate-950 overflow-hidden border-b border-slate-700">
+                    {prop.imageCid ? (
+                      <img
+                        src={getIPFSUrl(prop.imageCid)}
+                        alt={prop.location}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                        }}
+                      />
                     ) : (
-                      <span className="text-slate-500 text-xs">Tidak tersedia</span>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-teal-900/10 to-blue-900/10 text-teal-400 gap-2">
+                        <Building2 size={48} className="opacity-40" />
+                        <span className="text-xs font-semibold tracking-wider text-slate-500 uppercase">Premium Real Estate Asset</span>
+                      </div>
                     )}
+                    <div className="absolute top-4 left-4 px-3 py-1 bg-slate-950/80 backdrop-blur-md rounded-full text-xs font-bold text-teal-400 border border-teal-500/30">
+                      ID: #{prop.id}
+                    </div>
+                  </div>
+
+                  {/* Property Content */}
+                  <div className="p-5 flex flex-col flex-grow gap-3 text-sm text-slate-300">
+                    <h4 className="font-bold text-white text-lg line-clamp-1">{prop.location}</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4 my-2">
+                      <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+                        <span className="text-xs text-slate-500 block mb-1">Asset Valuation</span>
+                        <strong className="text-teal-400 text-lg font-extrabold">{prop.valuation}</strong>
+                      </div>
+                      <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-800 flex flex-col justify-center">
+                        <span className="text-xs text-slate-500 block mb-1 font-medium">Fractional Shares</span>
+                        <strong className="text-blue-300 text-sm font-semibold">1,000,000 PDAO</strong>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between border-t border-slate-700/50 pt-4">
+                      <div>
+                        <span className="text-xs text-slate-500 block">Dokumen Legal</span>
+                        {prop.cid ? (
+                          <a
+                            href={getIPFSUrl(prop.cid)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                          >
+                            <ExternalLink size={12} />
+                            Lihat Sertifikat PDF
+                          </a>
+                        ) : (
+                          <span className="text-slate-500 text-xs">Tidak tersedia</span>
+                        )}
+                      </div>
+                      
+                      <div className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold uppercase tracking-wider">
+                        Active RWA
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

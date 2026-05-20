@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { useWeb3 } from '../context/Web3Context';
 import { PropertyTokenABI, PropertyRegistryABI, DividendDistributorABI } from '../abis';
 import config from '../config.json';
-import { uploadToIPFS } from '../utils/pinata';
+import { uploadToIPFS, getIPFSUrl } from '../utils/pinata';
 import { Shield, Building2, Coins, CircleDollarSign, Plus, Send, RefreshCw, FileEdit, Loader2, AlertTriangle, CheckCircle2, Upload, FileCheck } from 'lucide-react';
 
 export default function Admin() {
@@ -18,6 +18,11 @@ export default function Admin() {
   const [propFile, setPropFile] = useState(null);
   const [isUploadingPropFile, setIsUploadingPropFile] = useState(false);
   const [isRegisteringProp, setIsRegisteringProp] = useState(false);
+
+  // Property Image states
+  const [propImageFile, setPropImageFile] = useState(null);
+  const [propImageCID, setPropImageCID] = useState('');
+  const [isUploadingPropImage, setIsUploadingPropImage] = useState(false);
 
   // Properties list
   const [properties, setProperties] = useState([]);
@@ -74,11 +79,25 @@ export default function Admin() {
       for (let i = 1; i < Number(nextId); i++) {
         const prop = await registry.properties(i);
         if (prop.isRegistered) {
+          let imageCid = null;
+          let docCid = prop.legalDocumentCID;
+          
+          if (prop.legalDocumentCID && prop.legalDocumentCID.startsWith('{')) {
+            try {
+              const meta = JSON.parse(prop.legalDocumentCID);
+              imageCid = meta.image;
+              docCid = meta.doc;
+            } catch (e) {
+              console.error("Failed to parse property JSON CID", e);
+            }
+          }
+
           props.push({
             id: i,
             location: prop.location,
             valuation: prop.valuation,
-            cid: prop.legalDocumentCID
+            cid: docCid,
+            imageCid: imageCid
           });
         }
       }
@@ -139,20 +158,43 @@ export default function Admin() {
     setIsUploadingPropFile(false);
   };
 
+  // Upload image to IPFS for property registration
+  const handlePropImageUpload = async (file) => {
+    if (!file) return;
+    setPropImageFile(file);
+    setIsUploadingPropImage(true);
+    try {
+      const result = await uploadToIPFS(file, `property-img-${Date.now()}`);
+      setPropImageCID(result.cid);
+      showToast(`Foto di-upload ke IPFS! CID: ${result.cid.substring(0, 12)}...`);
+    } catch (e) {
+      console.error(e);
+      showToast("Gagal upload foto ke IPFS: " + e.message, "error");
+      setPropImageFile(null);
+    }
+    setIsUploadingPropImage(false);
+  };
+
   // Register property
   const handleRegisterProperty = async (e) => {
     e.preventDefault();
     if (!signer || !propDocCID) return;
     setIsRegisteringProp(true);
     try {
+      const finalCid = propImageCID
+        ? JSON.stringify({ image: propImageCID, doc: propDocCID })
+        : propDocCID;
+
       const registry = new ethers.Contract(config.PropertyRegistry, PropertyRegistryABI, signer);
-      const tx = await registry.registerProperty(propLocation, propValuation, propDocCID);
+      const tx = await registry.registerProperty(propLocation, propValuation, finalCid);
       await tx.wait();
       showToast("Properti berhasil didaftarkan!");
       setPropLocation('');
       setPropValuation('');
       setPropDocCID('');
       setPropFile(null);
+      setPropImageFile(null);
+      setPropImageCID('');
       loadProperties();
     } catch (e) {
       console.error(e);
@@ -345,41 +387,81 @@ export default function Admin() {
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm text-slate-400 mb-1">Dokumen Legal (Upload ke IPFS)</label>
-              <div
-                className={`relative w-full border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer
-                  ${propFile
-                    ? 'border-green-500/50 bg-green-900/10'
-                    : 'border-slate-700 bg-slate-900/50 hover:border-teal-500/50 hover:bg-teal-900/10'
-                  }`}
-                onClick={() => document.getElementById('prop-file-input').click()}
-              >
-                <input
-                  id="prop-file-input"
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={(e) => handlePropFileUpload(e.target.files[0])}
-                />
-                {isUploadingPropFile ? (
-                  <div className="flex flex-col items-center gap-2 text-teal-400">
-                    <Loader2 size={28} className="animate-spin" />
-                    <span className="text-sm">Mengupload ke IPFS...</span>
-                  </div>
-                ) : propFile ? (
-                  <div className="flex flex-col items-center gap-2 text-green-400">
-                    <FileCheck size={28} />
-                    <span className="text-sm font-medium">{propFile.name}</span>
-                    <span className="text-xs text-slate-400 font-mono break-all">CID: {propDocCID}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-slate-500">
-                    <Upload size={28} />
-                    <span className="text-sm">Klik untuk upload dokumen</span>
-                    <span className="text-xs">PDF, JPG, PNG, DOC (maks 25MB)</span>
-                  </div>
-                )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Foto Properti (Upload ke IPFS)</label>
+                <div
+                  className={`relative w-full border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer min-h-[140px] flex flex-col items-center justify-center
+                    ${propImageFile
+                      ? 'border-green-500/50 bg-green-900/10'
+                      : 'border-slate-700 bg-slate-900/50 hover:border-teal-500/50 hover:bg-teal-900/10'
+                    }`}
+                  onClick={() => document.getElementById('prop-image-input').click()}
+                >
+                  <input
+                    id="prop-image-input"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handlePropImageUpload(e.target.files[0])}
+                  />
+                  {isUploadingPropImage ? (
+                    <div className="flex flex-col items-center gap-2 text-teal-400">
+                      <Loader2 size={28} className="animate-spin" />
+                      <span className="text-sm text-center">Mengupload foto...</span>
+                    </div>
+                  ) : propImageFile ? (
+                    <div className="flex flex-col items-center gap-2 text-green-400">
+                      <FileCheck size={28} />
+                      <span className="text-sm font-medium truncate max-w-[150px]">{propImageFile.name}</span>
+                      <span className="text-[10px] text-slate-400 font-mono truncate max-w-[150px]">CID: {propImageCID.substring(0,10)}...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-500">
+                      <Upload size={24} />
+                      <span className="text-sm">Klik upload foto</span>
+                      <span className="text-[10px]">JPG, PNG, WEBP</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Dokumen Legal (Upload ke IPFS)</label>
+                <div
+                  className={`relative w-full border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer min-h-[140px] flex flex-col items-center justify-center
+                    ${propFile
+                      ? 'border-green-500/50 bg-green-900/10'
+                      : 'border-slate-700 bg-slate-900/50 hover:border-teal-500/50 hover:bg-teal-900/10'
+                    }`}
+                  onClick={() => document.getElementById('prop-file-input').click()}
+                >
+                  <input
+                    id="prop-file-input"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={(e) => handlePropFileUpload(e.target.files[0])}
+                  />
+                  {isUploadingPropFile ? (
+                    <div className="flex flex-col items-center gap-2 text-teal-400">
+                      <Loader2 size={28} className="animate-spin" />
+                      <span className="text-sm text-center">Mengupload dokumen...</span>
+                    </div>
+                  ) : propFile ? (
+                    <div className="flex flex-col items-center gap-2 text-green-400">
+                      <FileCheck size={28} />
+                      <span className="text-sm font-medium truncate max-w-[150px]">{propFile.name}</span>
+                      <span className="text-[10px] text-slate-400 font-mono truncate max-w-[150px]">CID: {propDocCID.substring(0,10)}...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-500">
+                      <Upload size={24} />
+                      <span className="text-sm">Klik upload dokumen</span>
+                      <span className="text-[10px]">PDF, PNG, DOC</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <button
@@ -553,14 +635,27 @@ export default function Admin() {
         ) : (
           <div className="space-y-3">
             {properties.map(prop => (
-              <div key={prop.id} className="bg-slate-800/50 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 border border-slate-700/50">
-                <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400 font-bold shrink-0">
-                  {prop.id}
+              <div key={prop.id} className="bg-slate-800/50 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 border border-slate-700/50 hover:border-slate-600 transition-all">
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400 text-xs font-bold shrink-0">
+                    #{prop.id}
+                  </div>
+                  {prop.imageCid ? (
+                    <img
+                      src={getIPFSUrl(prop.imageCid)}
+                      alt="prop-preview"
+                      className="w-14 h-14 rounded-lg object-cover border border-slate-700"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-500">
+                      <Building2 size={20} />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white">{prop.location}</p>
+                  <p className="font-semibold text-white truncate">{prop.location}</p>
                   <p className="text-sm text-slate-400">Valuasi: {prop.valuation}</p>
-                  <p className="text-xs text-slate-500 font-mono truncate">CID: {prop.cid}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate">Doc CID: {prop.cid}</p>
                 </div>
               </div>
             ))}
