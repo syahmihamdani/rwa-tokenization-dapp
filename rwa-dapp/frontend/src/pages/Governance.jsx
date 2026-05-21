@@ -281,7 +281,7 @@ export default function Governance() {
             {isDelegating ? (
               <><Loader2 size={18} className="animate-spin" /> Delegating...</>
             ) : (
-              <><Zap size={18} /> Delegate ke Diri Sendiri</>
+              <><Zap size={18} /> Delegate</>
             )}
           </button>
         )}
@@ -462,8 +462,8 @@ export default function Governance() {
 
                     {!isActive && !isSucceeded && (
                       <div className="flex-1 text-center py-2.5 bg-slate-800/30 rounded-xl text-slate-500 text-sm">
-                        {prop.rawState === 7 ? '✅ Proposal telah dieksekusi' :
-                         prop.rawState === 3 ? '❌ Proposal ditolak' :
+                        {prop.rawState === 7 ? 'Proposal telah dieksekusi' :
+                         prop.rawState === 3 ? 'Proposal ditolak' :
                          prop.rawState === 0 ? '⏳ Menunggu periode voting dimulai' :
                          `Status: ${prop.status}`}
                       </div>
