@@ -93,7 +93,8 @@ export default function Dashboard() {
         Investor Dashboard
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Top Stats Cards Grid (2 Columns) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Token Balance */}
         <div className="glass p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3 transition-transform hover:scale-105 h-full">
           <div className="p-4 bg-teal-500/20 rounded-full text-teal-400">
@@ -122,13 +123,14 @@ export default function Dashboard() {
             Claim Now
           </button>
         </div>
+      </div>
 
-        {/* Properties Metadata */}
-        <div className="glass p-6 rounded-2xl flex flex-col text-left h-full md:col-span-3">
-          <div className="flex items-center space-x-3 mb-6">
-            <Building2 className="text-teal-400" />
-            <h3 className="text-xl font-bold">Aset Properti Terdaftar</h3>
-          </div>
+      {/* Properties Metadata Container */}
+      <div className="glass p-6 rounded-2xl flex flex-col text-left w-full">
+        <div className="flex items-center space-x-3 mb-6">
+          <Building2 className="text-teal-400" />
+          <h3 className="text-xl font-bold">Aset Properti Terdaftar</h3>
+        </div>
           {properties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {properties.map(prop => (
@@ -165,10 +167,6 @@ export default function Dashboard() {
                         <span className="text-xs text-slate-500 block mb-1">Asset Valuation</span>
                         <strong className="text-teal-400 text-lg font-extrabold">{prop.valuation}</strong>
                       </div>
-                      <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-800 flex flex-col justify-center">
-                        <span className="text-xs text-slate-500 block mb-1 font-medium">Fractional Shares</span>
-                        <strong className="text-blue-300 text-sm font-semibold">1,000,000 PDAO</strong>
-                      </div>
                     </div>
 
                     <div className="mt-2 flex items-center justify-between border-t border-slate-700/50 pt-4">
@@ -202,6 +200,5 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-    </div>
   );
 }
