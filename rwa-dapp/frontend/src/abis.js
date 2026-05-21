@@ -14,6 +14,7 @@ export const PropertyRegistryABI = [
   "function properties(uint256) view returns (string location, string valuation, string legalDocumentCID, bool isRegistered)",
   "function registerProperty(string memory _location, string memory _valuation, string memory _documentCID)",
   "function updateDocumentCID(uint256 propertyId, string memory _newDocumentCID)",
+  "function deleteProperty(uint256 propertyId)",
   "function nextPropertyId() view returns (uint256)",
   "function owner() view returns (address)"
 ];

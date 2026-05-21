@@ -4,7 +4,7 @@ import { useWeb3 } from '../context/Web3Context';
 import { PropertyTokenABI, PropertyRegistryABI, DividendDistributorABI } from '../abis';
 import config from '../config.json';
 import { uploadToIPFS, getIPFSUrl } from '../utils/pinata';
-import { Shield, Building2, Coins, CircleDollarSign, Plus, Send, RefreshCw, FileEdit, Loader2, AlertTriangle, CheckCircle2, Upload, FileCheck } from 'lucide-react';
+import { Shield, Building2, Coins, CircleDollarSign, Plus, Send, RefreshCw, FileEdit, Loader2, AlertTriangle, CheckCircle2, Upload, FileCheck, Trash2 } from 'lucide-react';
 
 export default function Admin() {
   const { account, signer, provider } = useWeb3();
@@ -49,6 +49,9 @@ export default function Admin() {
 
   // Toast / feedback
   const [toast, setToast] = useState(null);
+
+  // Deleting property state
+  const [deletingId, setDeletingId] = useState(null);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -239,6 +242,26 @@ export default function Admin() {
       showToast("Gagal memperbarui dokumen.", "error");
     }
     setIsUpdatingDoc(false);
+  };
+
+  // Delete property on-chain
+  const handleDeleteProperty = async (propertyId) => {
+    if (!signer) return;
+    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus Properti #${propertyId}? Tindakan ini bersifat permanen.`);
+    if (!confirmDelete) return;
+
+    setDeletingId(propertyId);
+    try {
+      const registry = new ethers.Contract(config.PropertyRegistry, PropertyRegistryABI, signer);
+      const tx = await registry.deleteProperty(propertyId);
+      await tx.wait();
+      showToast(`Properti #${propertyId} berhasil dihapus!`);
+      loadProperties();
+    } catch (e) {
+      console.error(e);
+      showToast("Gagal menghapus properti.", "error");
+    }
+    setDeletingId(null);
   };
 
   // Transfer tokens
@@ -656,6 +679,20 @@ export default function Admin() {
                   <p className="font-semibold text-white truncate">{prop.location}</p>
                   <p className="text-sm text-slate-400">Valuasi: {prop.valuation}</p>
                   <p className="text-xs text-slate-500 font-mono truncate">Doc CID: {prop.cid}</p>
+                </div>
+                <div className="shrink-0 self-end sm:self-center">
+                  <button
+                    onClick={() => handleDeleteProperty(prop.id)}
+                    disabled={deletingId !== null}
+                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/30 rounded-xl transition-all disabled:opacity-50 flex items-center gap-1.5 text-xs font-semibold"
+                  >
+                    {deletingId === prop.id ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
+                    Hapus
+                  </button>
                 </div>
               </div>
             ))}

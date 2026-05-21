@@ -41,6 +41,9 @@ contract PropertyRegistry is Ownable {
         string newLegalDocumentCID
     );
 
+    // Event saat properti dihapus
+    event PropertyDeleted(uint256 indexed propertyId);
+
     constructor() Ownable(msg.sender) {}
 
     // Mendaftarkan properti baru
@@ -83,5 +86,17 @@ contract PropertyRegistry is Ownable {
             propertyId,
             _newDocumentCID
         );
+    }
+
+    // Menghapus properti terdaftar (soft delete)
+    function deleteProperty(uint256 propertyId) external onlyOwner {
+        require(
+            properties[propertyId].isRegistered,
+            "Property not found or already deleted"
+        );
+
+        properties[propertyId].isRegistered = false;
+
+        emit PropertyDeleted(propertyId);
     }
 }
