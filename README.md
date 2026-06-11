@@ -1,7 +1,66 @@
 # PropDAO - Real Estate Tokenization DApp
 
-Real World Asset (RWA) tokenization have been a key trend over the last few years. With this system, people can invest their money into a fraction of a RWA, such as real estate. By doing that, they can get benefits such as dividends on every rent to getting a vote on the property management decisions.
+A decentralized application for real-world asset (RWA) tokenization of real estate, powered by DAO governance on the Ethereum blockchain.
 
-One major problem with RWA tokenization is that there have been many cases of financial mismanagement from the third party involved, such as fraud. This leads to many people complaining and court cases that have been done. This mismanagement comes from the centralized approach of the system, which can be solved by leveraging the decentralized system on a blockchain network.
+## About
 
-This is where Decentralized Autonomous Organization (DAO) comes in. A DAO based RWA system can help build trust of users and prevent financial mismanagement that could come in a previous system.
+PropDAO lets users invest in fractional ownership of real estate properties through blockchain tokens. Property decisions are governed by a DAO — token holders can vote on proposals and receive dividend distributions, all managed transparently through smart contracts.
+
+## Tech Stack
+
+- **Smart Contracts** — Solidity 0.8.28, Hardhat, OpenZeppelin
+- **Frontend** — React 19, Vite, Tailwind CSS
+- **Blockchain** — Ethers.js, Sepolia testnet
+- **Governance** — On-chain DAO voting & dividend distribution
+
+## Smart Contracts
+
+| Contract | Description |
+|---|---|
+| `PropertyToken.sol` | ERC-20 token representing fractional property ownership |
+| `PropertyRegistry.sol` | Registers and manages property listings |
+| `PropertyDAO.sol` | DAO governance — proposals and voting |
+| `DividendDistributor.sol` | Distributes rental income to token holders |
+
+## Project Structure
+
+```
+rwa-dapp/
+├── contracts/          # Hardhat project with Solidity contracts
+│   ├── contracts/      # Smart contract source files
+│   └── scripts/        # Deployment scripts
+└── frontend/           # React + Vite frontend
+    └── src/
+        ├── pages/      # Dashboard, Admin, Governance
+        ├── context/    # React context providers
+        └── utils/      # Helper utilities
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js
+- MetaMask wallet
+- Sepolia testnet ETH (for deployment)
+
+### Smart Contracts
+
+```bash
+cd rwa-dapp/contracts
+npm install
+npx hardhat compile
+npx hardhat run scripts/deploy.js --network sepolia
+```
+
+### Frontend
+
+```bash
+cd rwa-dapp/frontend
+npm install
+npm run dev
+```
+
+## Environment Variables
+
+Create `.env` files in both `rwa-dapp/contracts/` and `rwa-dapp/frontend/` with the required configuration (RPC URL, private key, contract addresses, etc.).
